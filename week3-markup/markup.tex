@@ -155,10 +155,7 @@
     \renewcommand{\LaTeX}{\textrm{\Oldlatex}}
     % Document parameters
     % Document title
-
-\date{28 October 2024}
-\setcounter{secnumdepth}{0}
-    \title{markup}
+    \title{Markup}
     
     
     
@@ -211,6 +208,7 @@
 \@namedef{PY@tok@gr}{\def\PY@tc##1{\textcolor[rgb]{0.89,0.00,0.00}{##1}}}
 \@namedef{PY@tok@ge}{\let\PY@it=\textit}
 \@namedef{PY@tok@gs}{\let\PY@bf=\textbf}
+\@namedef{PY@tok@ges}{\let\PY@bf=\textbf\let\PY@it=\textit}
 \@namedef{PY@tok@gp}{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
 \@namedef{PY@tok@go}{\def\PY@tc##1{\textcolor[rgb]{0.44,0.44,0.44}{##1}}}
 \@namedef{PY@tok@gt}{\def\PY@tc##1{\textcolor[rgb]{0.00,0.27,0.87}{##1}}}
@@ -377,6 +375,8 @@
 
 \begin{document}
     
+\date{28 October 2024}
+\setcounter{secnumdepth}{0}
     \maketitle
     
     
@@ -523,9 +523,9 @@ LaTeX
 
 XML
 
-    \$\$ \begin{equation}
+    \begin{equation}
 \text{Dice}(A, B) = \frac{2 |A \cap B|}{|A| + |B|}
-\end{equation} \$\$
+\end{equation}
 
     \hypertarget{the-rules-of-xml}{%
 \subsubsection{The rules of XML}\label{the-rules-of-xml}}
@@ -547,6 +547,26 @@ XML
   \texttt{\textless{}character\ name="Anne\ Elliot"\textgreater{}Miss\ Elliot\textless{}/character\textgreater{}}
 \end{itemize}
 
+    \hypertarget{markup-schemes}{%
+\subsubsection{Markup schemes}\label{markup-schemes}}
+
+With XML you are free to use any elements you like. This brings great
+flexibility.
+
+However it creates a couple of problems:
+
+\begin{itemize}
+\tightlist
+\item
+  If texts are marked up differently they're not usable \emph{en masse}
+\item
+  Writing your own scheme is a lot of work
+\end{itemize}
+
+A solution is to use an existing encoding scheme. There are many, but
+the most commonly used one in Digital Humanities is the
+\href{https://www.tei-c.org}{Text Encoding Initiative}.
+
     \hypertarget{group-work}{%
 \paragraph{Group work}\label{group-work}}
 
@@ -554,7 +574,8 @@ Mark up the first couple of pages of \texttt{persuasion.xml}. - Decide
 on what you want to mark up: proper nouns, parts of speech, whatever you
 like - Come up with a markup scheme: what will be an element name and
 what will be an attribute value? - Periodically check that your XML is
-valid by opening it/refreshing it in a browser
+valid by opening it/refreshing it in a browser - If you have time, try
+to map your markup to the elements used in TEI
 
 
     % Add a bibliography block to the postdoc
