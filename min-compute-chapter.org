@@ -1,0 +1,184 @@
+* Searching at scale: a minimal approach 
+
+This chapter is a practical demonstration of how to search sets of text files quickly and easily. This technique is very extensible: anything which is in plain-text format and which you have saved locally on your laptop can be searched in the same way. We use Tricontinental as an example corpus but once you have mastered a few techniques you can apply them to anything in text format (for documents in a 'binary' format like Microsoft Word, you'd have to first save them as plain text, but then the same approach can be applied).
+
+# Danny this is a comment in Org syntax
+
+Why would you want to do this with a corpus like Tricontinental? After all, with a PDF you can just open it and search for words. The approach we will take in this chapter offers the power and flexibility of being able to create your own searches to run across many files at once, and save the results as you wish, without the overhead of learning a programming language such as Python. You could do what we do below with Python or another language but it would almost certainly be slower and you'll have more to type, so we recommend this approach even to those who know how to program.
+
+Other possibilities are reading the PDFs in a narrative way or using the search function within individual files. There is nothing wrong with these approaches but what we will cover in this chapter will help you to focus your reading, and perhaps consider reading files you wouldn't have expected to contain useful information for your research.
+
+Tricontinental was digitised as a set of PDFs. Converting PDFs to text files is not difficult but the details of set-up on various operating systems (particularly Windows) would take us too far afield. If you ever want to do this there are two methods that we have found work well. 1) Install the [[https://poppler.freedesktop.org/][Poppler]] suite of tools on your computer. Then open a command line window in a directory which you have a particular file (let's say it's called ~myfile.pdf~) and type ~pdftotext myfile.pdf~. That will create a copy of the file called ~myfile.txt~. You would be able to search it using the techniques in this chapter. 2) Use the Python programming language and a module called ~pypdf~: the instructions in their documentation will give you almost everything you need: https://pypdf.readthedocs.io/en/stable/user/extract-text.html. We do recommend that when installing a third-party Python library you create a virtual environment and install it there.
+
+** Searching multiple files 
+
+In this section we will build up to searching multiple text files for patterns in the text and writing the outputs to new files. We will assume that you have downloaded the text files to a folder so that you can follow along *ensure we give the URL to download from*.
+
+We will be using the command line which comes installed on your computer if you are running Windows 11, Mac or Linux. If you're using Windows 10 or earlier you may need to install the program Git Bash. On Windows this is called Git Bash, on Mac and Linux it's called Terminal.
+
+It's possible to navigate around your file system with the command line, but to keep things simple we will skip the introduction to that (you can find many tutorials online). On Windows and Linux, navigate to the folder with the ~.txt~ files and right click to get a context menu, you might need to view more options to see it, but there will be an option to open Git Bash at that location. On a Mac navigate to the folder in Finder and control + click to get the context menu and then ~Services > New Terminal at Folder~.
+
+*Note* to keep things simple I'm assume we'll put all text files into one folder, not in sub-folders as currently with the PDFs.
+
+** Searching for a string with ~grep~ 
+
+The ~grep~ program comes pre-installed with the command line programs we mentioned above, so you probably already have it or have installed it on Windows 10 or earlier. It's a program which searches a file or files for the patterns you give it. This is an ideal choice for two reasons: ~grep~ is very fast and it's been used on many operating systems for decades: that means that if you get stuck you can always find help online because ~grep~ is so widely used. Because it's very fast it scales up nicely: you can use ~grep~ to search hundreds of thousands of files or gigabytes of data.
+
+Let's now use ~grep~ to search all of the text files at once. The basic usage of ~grep~ is
+
+~search-string filename~
+
+Let's try searching all the files for "Vietnam". Instead of a filename we'll use ~*.txt~, where the ~*~ wildcard matches every ~.txt~ files in this current folder:
+
+~grep Vietnam *.txt~
+
+You should see your screen fill up with text. An example line looks like this:
+
+~BLDS_Legacy_Tricontinental_No94_1975.txt:Under the leadersh ip of the NLF, the South Vietnamese people have won brilli ant~
+
+We first have the file name where the match was found and then the entire matching line. This is the default behaviour but either can be changed. Notice as well a few OCR errors, such as ~leadersh ip~. Using ~grep~ doesn't cause these problems but exposes underlying ones so that we at least know what we're dealing with.
+
+You might only be interested in "South Vietnam", in which case you can search for it as above. But it is possible to exclude lines that contain a string. If you want to exclude lines from the search containing "North Vietnam" you add a /flag/ to ~grep~. A flag is a letter or letters after the ~grep~ command, preceded by a a hyphen. Try running this:
+
+~grep -v "North Vietnam" *.txt~
+
+You should now gain an appreciation of how fast ~grep~ is, because we have returned every line in the collection that does not contain "North Vietnam". That's a lot of lines and not necessarily what we want with the collection.
+
+Instead let's try filtering our original command and removing lines in the result which contain "North Vietnam".
+
+~grep "Vietnam" *.txt | grep -v "North Vietnam"
+
+The second ~grep~, the one after the ~|~ character (known as /pipe/) is not searching the corpus: it's searching the results from the first ~grep~. What we have now is all the lines in the corpus which contain "Vietnam", excluding the lines which contain "North Vietnam".
+
+With ~grep~ we always need to bear in mind that we are matching sequences of characters in lines. We're not filtering these results as a human reader would. For example, this invented line would be excluded from our search results:
+
+/in South Vietnam North Vietnamese fighters/
+
+If you're familiar with Boolean logic we can sum up this section by comparing our searches to two Booleans: ~AND~ and ~NOT~. Passing one ~grep~ to another using a pipe is the equivalent to ~AND~, because you will only get results with both search strings in the line:
+
+~grep /this/ files.txt | grep /that/~
+
+The ~v~ flag is the equivalent of a Boolean ~NOT~ because it returns only lines that do not contain the search string:
+
+~grep -v~ /not this/ *.txt~
+
+There are a couple of techniques for achieving a Boolean ~OR~ and we'll cover one in the next section and one in the final section on regular expressions.
+
+** Writing results to files
+
+You probably won't be satisfied with results on screen. Fortunately writing to a file is simple. Add ~>~ after a command, followed by a filename. A new file will be created with the results (*beware*: if a file with that name exists already it will be overwritten).
+
+~grep "Vietnam" *.txt | grep -v "North Vietnam" > south-vietnam.txt~
+
+We mentioned the Boolean ~OR~ above. One way to do this is to run multiple searches with ~grep~ and write them to the same file. We can do this by appending subsequent search results to the same file. If you use ~>>~ instead of ~>~ you can append to an existing file. For example if you wanted all the lines in the corpus that contain /Vietnam/ or /Laos/ or /Cambodia/ you could do it like this:
+
+~grep -i "Vietnam" *.txt > vietnam-laos-cambodia.txt~
+~grep -i "Laos" *.txt >> vietnam-laos-cambodia.txt~
+~grep -i "Cambodia" *.txt >> vietnam-laos-cambodia.txt~
+
+Note that you might get duplicate lines with this approach, if any lines happen to contain two of the search strings they'll be written to the file twice. In the final section on regular expressions we'll show a slightly more efficient way of doing this same ~OR~ search.
+
+What about if you just want to create a list of files that contain a certain string, to target your reading? There is a flag for that. To list all of the files which contain "North Vietnam" we would type:
+
+~grep -l "North Vietnam" *.txt~
+
+That's it. If you want to save this to a file then append ~>~ and an appropriate filename, as above.
+
+Be aware that with this approach we can't do any filtering with ~|~ as we did earlier. That's because the results themselves are discarded and you would be searching a set of filenames. It's possible to get the same results for a filter, but it's more fiddly, and we'll come back to it at the end of this chapter.
+
+** Counting search results 
+
+Another thing you will want to do is to count results. ~grep~ has another flag for this: ~c~.
+
+~grep -c "Vietnam" *.txt~
+
+You will get counts for /each line/ in the corpus which contains "Vietnam", or any other string that's of interest.
+
+Because the corpus filenames are ordered alphabetically, this is a useful way to see the distribution over time (if you want to filter out the zero results, see if you can do it using techniques we've already covered!).
+
+However you might want to order the results by number of counts, especially when you have many files. To do this we're going use the ~|~ again, but this time send the result to another program called ~sort~. This is a bit more complicated because the files are /already sorted/ in alphabetical order. Now we want to sort by a different part of the results: the counts we're interested in, which are the numbers after the colon.
+
+First we'll use a flag to tell ~sort~ that we want fields in the results to be delimited by a ~:~. This means that the results will be effectively two columns and we'll sort on the second one:
+
+~grep -c "Vietnam" *.txt | sort -d: -k2
+
+This sort of works: the last file has 96 lines containing "Vietnam", but if we look up we'll see higher numbers above, which haven't sorted as we wanted, such as 115. This is because 1 comes before 9! This isn't what we want so we need a final flag to tell ~sort~ to sort /numerically/. In other words to sort such that 115 comes after 96.
+
+~grep -c "Vietnam" *.txt | sort -d: -k2 -n
+
+Now at the bottom of our results we can see the file in the corpus which has the most lines with mentions of "Vietnam". We can of course write that out to a file for use later, using ~>~.
+~grep -c "Vietnam" *.txt | sort -d: -k2 -n > vietnam-counts.txt
+~grep -c "Vietnam" *.txt | sort -d: -k2 -n > vietnam-counts.txt
+
+~grep -c "Vietnam" *.txt | sort -d: -k2 -n > vietnam-counts.txt
+
+If you open this file you'll find it was sorted conveniently for the screen, with the highest numbers at the bottom. But in a file you might prefer the reverse. ~sort~ provides yet another option to reverse the sort order, ~r~. Adding this will give you the highest counts first:
+
+~grep -c "Vietnam" *.txt | sort -d: -k2 -nr > vietnam-counts.txt
+
+This is already quite useful but we are only searching for literal strings. We wouldn't find either differences of case, such as /VIETNAM/ or differences of spelling such as /Viet nam/ or both: /Viet Nam/. Let's address that now.
+
+Making grep case-insensitive is - you guessed it - a flag. In this case ~i~ for /insensitive/. This is nearly always what you want when using grep unless you're very sure of the spellings in the entire corpus or if you need to differentoiate by case for some reason. You can see if there is any difference between the results for these two by counting both:
+~grep -c "Viet Nam"~
+~grep -ci "Viet Nam"~
+
+Even if the results are the same you are guaranteed to get at least as many with case-insensitive, so we'd recommend you use it.
+
+You could laboriously search for different spellings, such as /Vietnam/ and /Vietnam/ and create different files of results. You can append results to an existing file by changing ~>~ to ~>>~. Be wary when doing this, though, because it's very easy to forget the second ~>~ and overwrite your earlier work. A safer way to combine files from the command line is to create the different files and then combine them using the ~cat~ command (short for /concatenate/).
+
+~cat vietnam-counts.txt viet_nam-counts.txt > all-vietnam-counts.txt~
+
+** Searching for patterns rather than literal strings 
+
+However it is often better to search text for patterns rather than literal strings, using /regular expressions/, also known as /regex/. This is a big topic and we will only show you a couple of techniques, but regular expressions are used in all kinds of tools and programming languages, so if you learn them for ~grep~ you will be able to use them in many contexts. A good resource for learning more regex is *add something here* but really the only way to become comfortable with them is practice.
+
+To turn on regular expressions in a ~grep~ search we use the flag ~E~. Let's add that now and see what happens:
+
+~grep -Ei "Viet nam" *.txt
+
+Nothing dramatic! Regular expressions mix up literal characters and special characters, and here we've only used literals. But suppose we want the space in our search to be optional, so we match /Vietnam/ as well. A ~?~ after a character means /one or none/ of that character. So the search
+
+~grep -Ei "Viet ?nam" *.txt
+
+Returns results for /Viet nam/ and /Vietnam/ and, because it's also case-insensitive, permutations such as /Viet Nam/ or /VIETNAM/. 
+
+In essence that's all there is to regular expressions: some characters, such as ~?~ are special. If you want to search for a literal ~?~ you precede it with ~\~ to stop it being special.~grep -Ei "Viet nam" *.txt
+
+This technique generalises to many spelling variants. You can use it to check for an optional hyphen, for example. Some common English words appear as hyphenated, spaced or closed up. How can we check for any of these?
+
+An efficient way of doing this is to look for /one or none/ of any characters in a set of possibilities. In regular expressions a set of characters is denoted by square brackets, so a space or hyphen is ~[ -]~. Putting this together with ~?~, we can search for /Vietnam/, /Viet nam/, /Viet-nam/ with
+
+~grep -Ei "Viet[ -]?nam" *.txt~
+
+There are many more things you can do with regular expressions, but many of them are specific to particular queries and particular texts. We'll cover two more general techniques and hope that you will be able to extend this chapter to your own interests.
+
+Recall that grep works line by line and, by default, returns a full line containing your search string. But what constitutes a line depends on the corpus: if it's poetry the line may be only a couple of words long, but in prose the line might be an entire long paragraph (it depends where the carriage returns are: some text...*this is getting a bit convoluted*).
+
+** Finding keywords in context
+
+It's easy to write a regular expression that provides as much context around a match as you're interested in. The ~.~ character stands for /any character/, so a simple way to see characters is to surround the match string with as many as you want to see, for example 10 characters each side:
+
+~grep -Eoi "..........Viet[ -]?nam.........." *.txt~
+
+We sneaked in another flag in the above: ~o~. By default grep returns the whole line, but the ~o~ flag returns only what is in the match. It doesn't usually make sense to use this without a regular expression because we already know what the literal strings look like.
+
+This is an effective approach and quite intuitive: just add more dots or remove dots as you want more or less context. However it does potentially miss some matches. We're asking for 10 characters either side of the match: if the match appears right at the beginning or end of the line it won't be returned because it's not what we asked for. To get those as well we want to say that these are all optional characters, so that we ask for /up to 10/ rather than /exactly 10/.
+**
+You might remember the ~?~ used above. We could put one of those after each ~.~ like this: ~.?.?~ and so on, but that is tedious to do. Itstead we can specify a minimum and maximum number of characters:
+
+~grep -Eoi ".{0,10}Viet[ -]?nam{0,10}" *.txt~
+
+This is a very useful technique when querying large text collections. 
+
+Let's finish with a regular expression approach to the Boolean ~OR~ search that we mentioned in the section on writing to files. Instead of appending lines to the same file with multiple searches, we can use regular expressions to do the search once. Recall that we were looking for lines that contain /Vietnam/ or /Laos/ or /Cambodia/. We can separate these in the search with the ~|~ symbol that we've already used in a different context:
+
+~grep -Ei *.txt "Viet[ -]?nam|Laos|Cambodia" *.txt > vietnam-laos-cambodia.txt~
+
+** Going further
+
+There is a little bit more to regular expressions than we have covered in this chapter, but not much. Searches mostly get more complex by combining the fairly simple syntax in complicated ways. There is also a replacement option with regular expressions, but you can't use it with ~grep~ (which only searches) and would need to use a different program or the regex search box that comes with most text editors. 
+
+To learn more about regular expressions we recommend [[https://www.regular-expressions.info][this site]], which will enable you to tailor highly specific regular expressions to the patterns of interest in your particular research. 
+
+In this chapter we've used ~grep~ and regular expressions to do some fairly powerful searches on the Tricontintal corpus and to save those results to files for later reference. We'd like to emphasise that exactly the same method can be applied to any text files you have in a folder on your computer. You can very often find plain text files or collections online and, once downloaded, you can apply what we've done in this chapter, changing the search strings as needed.
+
